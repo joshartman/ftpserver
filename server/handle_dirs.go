@@ -87,7 +87,18 @@ func (c *clientHandler) handleLIST() {
 	if files, err := c.driver.ListFiles(c); err == nil {
 		if tr, err := c.TransferOpen(); err == nil {
 			defer c.TransferClose()
-			c.dirTransferLIST(tr, files)
+			c.dirTransferLIST(tr, files, true)
+		}
+	} else {
+		c.writeMessage(500, fmt.Sprintf("Could not list: %v", err))
+	}
+}
+
+func (c *clientHandler) handleNLST() {
+	if files, err := c.driver.ListFiles(c); err == nil {
+		if tr, err := c.TransferOpen(); err == nil {
+			defer c.TransferClose()
+			c.dirTransferLIST(tr, files, false)
 		}
 	} else {
 		c.writeMessage(500, fmt.Sprintf("Could not list: %v", err))
@@ -138,10 +149,13 @@ func (c *clientHandler) fileStat(file os.FileInfo) string {
 }
 
 // fclairamb (2018-02-13): #64: Removed extra empty line
-func (c *clientHandler) dirTransferLIST(w io.Writer, files []os.FileInfo) error {
+func (c *clientHandler) dirTransferLIST(w io.Writer, files []os.FileInfo, details bool) error {
 	for _, file := range files {
-		//		fmt.Fprintf(w, "%s\r\n", c.fileStat(file))
-		fmt.Fprintf(w, "%s\r\n", file.Name())
+		if details {
+			fmt.Fprintf(w, "%s\r\n", c.fileStat(file))
+		} else {
+			fmt.Fprintf(w, "%s\r\n", file.Name())
+		}
 	}
 	return nil
 }
